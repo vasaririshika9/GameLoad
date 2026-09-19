@@ -38,7 +38,8 @@ def get_local_lan_ip() -> str:
 
 LOCAL_LAN_IP = get_local_lan_ip()
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
-PUBLIC_LAUNCH_BASE_URL = os.getenv("PUBLIC_LAUNCH_BASE_URL", "")
+FRONTEND_URL = os.getenv("FRONTEND_URL", os.getenv("PUBLIC_LAUNCH_BASE_URL", "https://game-load.vercel.app")).rstrip("/")
+PUBLIC_LAUNCH_BASE_URL = os.getenv("PUBLIC_LAUNCH_BASE_URL", FRONTEND_URL).rstrip("/")
 
 app = FastAPI(
     title="GameLoad AI — Near-Instant Game Launch Platform",
@@ -327,10 +328,8 @@ async def get_analytics():
 async def generate_qr_code(req: GenerateQrRequest, request: Request):
     """
     Generates a valid cross-device QR code.
-    IMPORTANT (Requirement 8):
-    - Must NOT contain 'localhost' or private IP in production.
-    - In development: Uses LAN IP (e.g. http://10.10.161.116:5173/play/{game_id}) so real phones on local Wi-Fi work!
-    - In production: Uses PUBLIC_LAUNCH_BASE_URL (https://gameload.ai/play/{game_id}).
+    Targets deployed Vercel frontend (https://game-load.vercel.app/play/{game_id})
+    or configured FRONTEND_URL.
     """
     game = next((g for g in GAMES_DATABASE if g["id"] == req.game_id), None)
     if not game:
@@ -341,13 +340,12 @@ async def generate_qr_code(req: GenerateQrRequest, request: Request):
 
     if req.custom_url:
         target_url = req.custom_url
+    elif FRONTEND_URL:
+        target_url = f"{FRONTEND_URL}{launch_path}"
     elif PUBLIC_LAUNCH_BASE_URL:
-        target_url = f"{PUBLIC_LAUNCH_BASE_URL.rstrip('/')}{launch_path}"
-    elif ENVIRONMENT == "production":
-        target_url = f"https://gameload.ai{launch_path}"
+        target_url = f"{PUBLIC_LAUNCH_BASE_URL}{launch_path}"
     else:
-        # Development LAN URL: accessible by any mobile phone connected to the same Wi-Fi
-        target_url = f"http://{LOCAL_LAN_IP}:5173{launch_path}"
+        target_url = f"https://game-load.vercel.app{launch_path}"
 
     # Generate high-contrast QR code
     qr = qrcode.QRCode(
@@ -371,10 +369,10 @@ async def generate_qr_code(req: GenerateQrRequest, request: Request):
         "launch_url": target_url,
         "launch_path": launch_path,
         "environment": ENVIRONMENT,
-        "is_lan_url": not bool(PUBLIC_LAUNCH_BASE_URL) and ENVIRONMENT != "production",
+        "is_lan_url": "localhost" in target_url or "10." in target_url or "192.168." in target_url,
         "cache_status": status,
         "qr_data_url": data_url,
-        "instructions": "Scan with your phone camera to launch this game directly on mobile over local network."
+        "instructions": "Scan with your phone camera to launch this game directly on mobile."
     }
 
 

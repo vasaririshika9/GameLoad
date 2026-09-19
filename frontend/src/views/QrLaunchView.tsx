@@ -185,7 +185,7 @@ export const QrLaunchView: React.FC<QrLaunchViewProps> = ({
               {selectedGame?.title}
             </h2>
             <p className="text-xs text-slate-400 font-mono">
-              Scan with any mobile phone to open directly over local network / production
+              Scan with any mobile phone to open directly at https://game-load.vercel.app
             </p>
           </div>
 

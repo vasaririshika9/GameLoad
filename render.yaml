@@ -8,7 +8,9 @@ services:
     envVars:
       - key: ENVIRONMENT
         value: production
+      - key: FRONTEND_URL
+        value: https://game-load.vercel.app
       - key: PUBLIC_LAUNCH_BASE_URL
-        value: https://gameload.ai
+        value: https://game-load.vercel.app
       - key: ALLOWED_ORIGINS
         value: "*"

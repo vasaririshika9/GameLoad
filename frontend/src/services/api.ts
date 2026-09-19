@@ -16,6 +16,14 @@ export const BACKEND_URL = (
   import.meta.env.VITE_API_URL || 'https://gameload-1.onrender.com'
 ).replace(/\/$/, '');
 
+// Target production frontend URL for cross-device QR scanning (Vercel)
+export const FRONTEND_URL = (
+  import.meta.env.VITE_FRONTEND_URL ||
+  (typeof window !== 'undefined' && window.location.origin.includes('vercel.app')
+    ? window.location.origin
+    : 'https://game-load.vercel.app')
+).replace(/\/$/, '');
+
 export const API_BASE = `${BACKEND_URL}/api`;
 
 // Configured Axios instance targeting https://gameload-1.onrender.com/api
@@ -162,10 +170,11 @@ export const api = {
   },
 
   async generateQr(game_id: string, custom_url?: string): Promise<QrResponse> {
+    const targetLaunchUrl = custom_url || `${FRONTEND_URL}/play/${game_id}`;
     const res = await fetch(`${API_BASE}/generate-qr`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ game_id, custom_url }),
+      body: JSON.stringify({ game_id, custom_url: targetLaunchUrl }),
     });
     if (!res.ok) throw new Error('Failed to generate QR code');
     return res.json();
