@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, CheckCircle2, Loader2, Zap, ArrowRight, Server, ShieldCheck, Sparkles } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useGameLoad } from '../context/GameLoadContext';
-import { api } from '../services/api';
+import { api, getWebSocketUrl } from '../services/api';
 
 interface OptimizationPipelineModalProps {
   isOpen: boolean;
@@ -59,8 +59,8 @@ export const OptimizationPipelineModal: React.FC<OptimizationPipelineModalProps>
     // Reset steps
     setSteps(prev => prev.map(s => ({ ...s, status: 'pending' })));
 
-    // Try WebSocket connection first, with fallback to HTTP orchestrator
-    const wsUrl = `ws://${window.location.host}/ws/orchestrator`;
+    // Try WebSocket connection first (points to deployed backend or local proxy)
+    const wsUrl = getWebSocketUrl('/ws/orchestrator');
     let ws: WebSocket | null = null;
     try {
       ws = new WebSocket(wsUrl);

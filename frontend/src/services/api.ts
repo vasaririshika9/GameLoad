@@ -9,8 +9,38 @@ import {
   NetworkMode
 } from '../types';
 
-const RAW_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
-const API_BASE = RAW_BASE ? `${RAW_BASE}/api` : '/api';
+import axios from 'axios';
+
+// Primary backend URL: Uses environment variable if set, otherwise defaults to deployed Render backend
+export const BACKEND_URL = (
+  import.meta.env.VITE_API_URL || 'https://gameload-1.onrender.com'
+).replace(/\/$/, '');
+
+export const API_BASE = `${BACKEND_URL}/api`;
+
+// Configured Axios instance targeting https://gameload-1.onrender.com/api
+export const axiosInstance = axios.create({
+  baseURL: API_BASE,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 20000,
+});
+export const apiClient = axiosInstance;
+
+/**
+ * Returns the appropriate WebSocket URL (wss:// or ws://) matching the backend URL.
+ */
+export function getWebSocketUrl(path: string = '/ws/orchestrator'): string {
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  if (BACKEND_URL.startsWith('http://') || BACKEND_URL.startsWith('https://')) {
+    const url = new URL(BACKEND_URL);
+    const wsProto = url.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${wsProto}//${url.host}${cleanPath}`;
+  }
+  const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return `${proto}//${window.location.host}${cleanPath}`;
+}
 
 export const api = {
   async getGames(): Promise<Game[]> {
